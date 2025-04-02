@@ -11,6 +11,7 @@ const GraphBuilder = () => {
   const [networkEdges] = useState(new DataSet([]));
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedItemType, setSelectedItemType] = useState(null);
+  const [history, setHistory] = useState([]);
 
   // References
   const networkContainer = useRef(null);
@@ -64,28 +65,7 @@ const GraphBuilder = () => {
           manipulation: {
             enabled: false,
             addEdge: function(edgeData, callback) {
-              const { from, to } = edgeData;
-
-              // Check for duplicate edges
-              const existingEdges = networkEdges.get().filter(edge =>
-                  edge.from === from && edge.to === to
-              );
-
-              if (existingEdges.length > 0) {
-                alert("This edge already exists!");
-                callback(null);
-                return;
-              }
-
-              // Prompt for edge weight
-              const weight = prompt("Enter edge weight (non-negative number):", "1");
-
-              if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
-                edgeData.label = weight;
-                callback(edgeData);
-              } else {
-                callback(null);
-              }
+              handleAddEdge(edgeData, callback);
             }
           },
           interaction: {
@@ -141,10 +121,12 @@ const GraphBuilder = () => {
     }
 
     try {
-      networkNodes.add({
-        id: newNodeName,
-        label: newNodeName
-      });
+      const newNode = { id: newNodeName, label: newNodeName };
+    
+      // Save action to history before adding the node
+      setHistory((prev) => [...prev, { type: "addNode", data: newNode }]);
+    
+      networkNodes.add(newNode);
     } catch (error) {
       console.error("Error adding node:", error);
     }
@@ -157,22 +139,69 @@ const GraphBuilder = () => {
     if (!networkInstance.current) return;
     networkInstance.current.addEdgeMode();
   };
+  // Modify edge addition logic to save history
+  const handleAddEdge = (edgeData, callback) => {
+    const { from, to } = edgeData;
 
+    // Check for duplicate edges
+    const existingEdges = networkEdges.get().filter(edge =>
+      edge.from === from && edge.to === to
+    );
+
+    if (existingEdges.length > 0) {
+      alert("This edge already exists!");
+      callback(null);
+      return;
+    }
+
+    // Prompt for edge weight
+    const weight = prompt("Enter edge weight (non-negative number):", "1");
+
+    if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
+      const completeEdgeData = {
+        ...edgeData,
+        label: weight,
+        id: `${from}-${to}` // Ensure consistent ID format
+      };
+
+      // Store the complete edge data in history
+      setHistory((prev) => [...prev, { 
+        type: "addEdge", 
+        data: completeEdgeData 
+      }]);
+
+      callback(completeEdgeData);
+    } else {
+      callback(null);
+    }
+  };
   // Delete the currently selected node or edge
   const deleteSelected = () => {
     if (selectedItem) {
       try {
         if (selectedItemType === "node") {
-          // Find and remove all edges connected to this node
+          const nodeData = networkNodes.get(selectedItem);
+
+          // Find and save all edges connected to this node
           const connectedEdges = networkEdges.get({
             filter: (edge) =>
-                edge.from === selectedItem || edge.to === selectedItem
+              edge.from === selectedItem || edge.to === selectedItem
           });
-          networkEdges.remove(connectedEdges);
 
-          // Then remove the node itself
+          // Save deletion to history before removing
+          setHistory((prev) => [
+            ...prev,
+            { type: "deleteNode", data: { node: nodeData, edges: connectedEdges } }
+          ]);
+
+          networkEdges.remove(connectedEdges);
           networkNodes.remove(selectedItem);
         } else if (selectedItemType === "edge") {
+          const edgeData = networkEdges.get(selectedItem.id);
+
+          // Save deletion to history before removing
+          setHistory((prev) => [...prev, { type: "deleteEdge", data: edgeData }]);
+
           networkEdges.remove(selectedItem.id);
         }
         setSelectedItem(null);
@@ -180,6 +209,34 @@ const GraphBuilder = () => {
       } catch (error) {
         console.error("Error deleting item:", error);
       }
+    }
+  };
+  // Undo function
+  const undoLastAction = () => {
+    if (history.length === 0) {
+      alert("No actions to undo!");
+      return;
+    }
+
+    const lastAction = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1)); // Remove last action from history
+
+    switch (lastAction.type) {
+      case "addNode":
+        networkNodes.remove(lastAction.data.id);
+        break;
+      case "addEdge":
+        networkEdges.remove(lastAction.data.id);
+        break;
+      case "deleteNode":
+        networkNodes.add(lastAction.data.node);
+        networkEdges.add(lastAction.data.edges);
+        break;
+      case "deleteEdge":
+        networkEdges.add(lastAction.data);
+        break;
+      default:
+        console.warn("Unknown action:", lastAction);
     }
   };
 
@@ -381,7 +438,13 @@ const GraphBuilder = () => {
             >
               Delete Selected
             </button>
-
+            <button
+                onClick={undoLastAction}
+                disabled={history.length === 0}
+                className={`p-2 rounded ${history.length > 0 ? "bg-yellow-500 text-white" : "bg-gray-300"}`}
+               >
+               Undo
+            </button>
             <div className="flex items-center ml-auto">
               <input
                   type="file"
