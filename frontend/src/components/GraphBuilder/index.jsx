@@ -352,53 +352,54 @@ const GraphBuilder = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-
+    <div className="flex flex-col gap-4 p-2">
       <FileImport handleFileUpload={handleFileUpload} />
-      
-      {/* Main content area with side-by-side layout */}
-      <div className="flex flex-row gap-4">
-        {/* Left side - Graph Controls */}
-        <div className="w-1/4">
-        <GraphControls
-          newNodeName={newNodeName}
-          setNewNodeName={setNewNodeName}
-          addNode={addNode}
-          connectNodes={connectNodes}
-          isConnectModeActive={isConnectModeActive}
-          deleteSelected={deleteSelected}
-          undo={undo}
-          clearGraph={clearGraph}
-          selectedItem={selectedItem}
-          history={history}
-          fitGraph={fitGraph}
-        />
 
-          
-          <div className="mt-4">
-            <SelectedItemInfo 
+      {/* Main content area with side-by-side layout */}
+      <div className="flex gap-3 h-[95vh]">
+        {/* Left side - Graph Controls + Selected Item Info */}
+        {/* Left side - Graph Controls + Selected Item Info */}
+        <div className="w-64 flex-shrink-0 h-full flex flex-col">
+          {/* GraphControls - No flex-grow */}
+          <div className="overflow-y-auto">
+            <GraphControls
+              newNodeName={newNodeName}
+              setNewNodeName={setNewNodeName}
+              addNode={addNode}
+              connectNodes={connectNodes}
+              isConnectModeActive={isConnectModeActive}
+              deleteSelected={deleteSelected}
+              undo={undo}
+              clearGraph={clearGraph}
+              selectedItem={selectedItem}
+              history={history}
+              fitGraph={fitGraph}
+            />
+          </div>
+          {/* Selected Item Info - Added mt-2 for a small gap */}
+          <div className="flex-shrink-0 mt-2">
+            <SelectedItemInfo
               selectedItem={selectedItem}
               selectedItemType={selectedItemType}
             />
           </div>
         </div>
-        
         {/* Right side - Network Container */}
-        <div className="w-3/4">
+        <div className="flex-grow flex flex-col">
           <div
             ref={networkContainer}
-            style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }}
-            className="bg-white"
+            style={{ width: "100%", height: "100%" }}
+            className="bg-white shadow-md rounded w-full border border-gray-300"
           />
         </div>
       </div>
 
+      {/* Graph Submit section */}
       <GraphSubmit
         graphTitle={graphTitle}
         setGraphTitle={setGraphTitle}
         processGraph={processGraph}
       />
-
     </div>
   );
 };

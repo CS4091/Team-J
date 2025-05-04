@@ -70,45 +70,63 @@ const MyGraphs = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">My Graphs</h2>
+    <div className="container mx-auto px-4">
+      <h2 className="text-2xl font-semibold mb-6">My Graphs</h2>
+      
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center">
+          <div className="animate-pulse">Loading graphs...</div>
+        </div>
       ) : graphs.length === 0 ? (
-        <p>No graphs found.</p>
+        <div className="bg-gray-50 rounded-lg p-8 text-center">
+          <p className="text-gray-600">No graphs found. Create your first graph to get started.</p>
+        </div>
       ) : (
-        <ul className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {graphs.map((graph) => (
-            <li key={graph.id} className="bg-white p-4 rounded shadow">
-              <p><strong>Name:</strong> {graph.name}</p>
-              <p><strong>Nodes:</strong> {graph.num_nodes}</p>
-              <p><strong>Edges:</strong> {graph.num_edges}</p>
-              <p><strong>Created:</strong> {new Date(graph.created_at).toLocaleDateString()}</p>
-              <p><strong>Updated:</strong> {new Date(graph.updated_at).toLocaleDateString()}</p>
-
-              <div className="mt-4 flex gap-2">
+            <div key={graph.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow duration-300 overflow-hidden">
+              <div className="p-5 border-b">
+                <h3 className="font-medium text-lg text-gray-800">{graph.name}</h3>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                  <div>
+                    <span className="font-medium">Nodes:</span> {graph.num_nodes}
+                  </div>
+                  <div>
+                    <span className="font-medium">Edges:</span> {graph.num_edges}
+                  </div>
+                  <div>
+                    <span className="font-medium">Created:</span> {new Date(graph.created_at).toLocaleDateString()}
+                  </div>
+                  <div>
+                    <span className="font-medium">Updated:</span> {new Date(graph.updated_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white px-5 py-3 flex gap-2 justify-end">
                 <button
                   onClick={() => handleView(graph.id)}
-                  className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-medium"
                 >
                   View
                 </button>
                 <button
-                  onClick={() => handleDelete(graph.id)}
-                  className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
-                <button
                   onClick={() => navigate(`/graphs/${graph.id}/edit`)}
-                  className="bg-yellow-500 text-white px-4 py-1 rounded hover:bg-yellow-600"
+                  className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-sm font-medium"
                 >
                   Edit
                 </button>
+                <button
+                  onClick={() => handleDelete(graph.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete
+                </button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
